@@ -5,7 +5,7 @@ using namespace std;
 #define SIZE 700
 #define GRAVITY 0.1f
 #define BOUNCE_DAMPING 0.7f
-#define FRAME_RATE 600
+#define FRAME_RATE 100
 
 typedef struct{
     sf::CircleShape ball;
@@ -129,9 +129,10 @@ void spawnBall(vector<Ball>& balls, string amt){
         return;
     }
     int radius = 5;
-    Ball ball = {sf::CircleShape(radius,9), sf::Vector2f(0,0), amount};
+    Ball ball = {sf::CircleShape(radius,20), sf::Vector2f(0,0), amount};
     float randomX = SIZE/2 + 25 -rand()%51;
     ball.ball.setPosition(randomX, 10-radius*2);
+    ball.ball.setFillColor(sf::Color::Red);
     balls.push_back(ball);
     balance-=amount;
 }
@@ -172,7 +173,7 @@ int main(){
     vector<sf::CircleShape> pins;
     for(int row=2;row<num_rows;++row){
         for(int col=0;col<=row;++col){
-            sf::CircleShape pin(3, 5);
+            sf::CircleShape pin(3, 20);
             float x = SIZE / 2 + (col - row/2.0f) * 32;
             float y = 25 + row * 32;
             pin.setPosition(x, y);
