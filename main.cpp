@@ -21,6 +21,10 @@ typedef struct{
 
 
 float balance = 100.0;
+queue<Block> blockHistory;
+int maxHist = 5;
+
+sf::RenderWindow window;
 
 
 void constrain(float& a, float min, float max, int sign){
@@ -82,11 +86,16 @@ bool checkCollision(Block& block, Ball& b) {
         balance += b.amount*block.score;
 
         //respawn the ball at the top
-        b.ball.setFillColor(sf::Color(0, 0, 0, 255));
         //float randomX = SIZE / 2 + 25 - rand() % 51;
         //b.ball.setPosition(randomX, 10);
         //b.vel.y = 0;
         //b.vel.x = 0;
+
+        b.ball.setFillColor(sf::Color(0, 0, 0, 255));
+        blockHistory.push(block);
+        if(blockHistory.size() > maxHist){
+            blockHistory.pop();
+        }
         return 1;
     }
     return 0;
@@ -103,17 +112,12 @@ float generateScore(int index, int num_blocks) {
     }
     float min_score = 0.1f;
 
-    // find the closest side and then square root the distance times
-    int dist = std::min(index, num_blocks-index);
-    for(;dist;--dist){
-        if(max_score<10){
-            max_score/=10;
-        }else{
-            max_score=sqrt(max_score);
-        }
-    }
+    int dist = std::min(index, num_blocks - index);
+    float decayFactor = std::pow(0.1, dist);
 
-    return std::max(max_score,min_score);
+    float score = max_score * decayFactor;
+
+    return std::max(score, min_score);
 }
 
 void spawnBall(vector<Ball>& balls, string amt){
@@ -146,9 +150,8 @@ int main(){
         exit(1);
     }
 
-    sf::RenderWindow window;
-    window.create(sf::VideoMode(SIZE, SIZE), "gambler");
 
+    window.create(sf::VideoMode(SIZE, SIZE), "gambler");
     window.setPosition(sf::Vector2i(700, 100));
 
 
@@ -199,7 +202,8 @@ int main(){
     float block_height = block_width - 6;
     for (int i = 0; i < num_blocks; ++i) {
         sf::RectangleShape block(sf::Vector2f(block_width, block_height));
-        block.setFillColor(colorScheme[i % colorScheme.size()]);
+        sf::Color blockColor = colorScheme[i % colorScheme.size()];
+        block.setFillColor(blockColor);
         block.setPosition(SIZE/2 + (i-num_rows/2.0f)*32+22, 15+num_rows*32);
         Block b = {block, generateScore(i,num_blocks-1)};
         blocks.push_back(b);
@@ -290,6 +294,29 @@ int main(){
         window.draw(moneyText);
         window.draw(priceText);
         window.draw(inputText);
+
+
+        // draw history
+        vector<Block> temp;
+        while(!blockHistory.empty()){
+            temp.push_back(blockHistory.front());
+            blockHistory.pop();
+        }
+        int z=temp.size();
+        for(int i=z-1;i>=0;--i){
+            temp[i].block.setPosition(SIZE*6/7,100+i*50);
+            blockHistory.push(temp[z-i-1]);
+
+
+            string score = to_string(temp[i].score);
+            sf::Text score_text(score.substr(0,score.find('.')+2), font, 12);
+            score_text.setFillColor(sf::Color::Black);
+
+            sf::Vector2f blockPos = temp[i].block.getPosition();
+            score_text.setPosition(blockPos.x + 2, blockPos.y + 2);
+            window.draw(temp[i].block);
+            window.draw(score_text);
+        }
         window.display();
 
     }
